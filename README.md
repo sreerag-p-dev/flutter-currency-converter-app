@@ -1,16 +1,29 @@
-# testproject
+# Currency Converter App
 
-A new Flutter project.
+A Flutter application that converts currencies in real-time with a clean UI, user authentication, and smooth animations.
+
+## Features
+
+* Currency conversion using REST API
+* Firebase authentication (login & signup)
+* BLoC state management
+* Error handling and user feedback
+* Splash screen
+* Smooth UI animations
+
+## Tech Stack
+
+* Flutter
+* Dart
+* REST API
+* BLoC
+* Firebase Authentication
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+flutter pub get
+flutter run
 
-A few resources to get you started if this is your first Flutter project:
+## About
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+This project demonstrates Flutter app development using REST API integration, BLoC state management, Firebase authentication, and proper error handling, along with smooth UI animations and a structured user flow.
