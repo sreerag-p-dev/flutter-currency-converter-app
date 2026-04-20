@@ -22,7 +22,10 @@ A Flutter application that converts currencies in real-time with a clean UI, use
 ## Getting Started
 
 flutter pub get
-flutter run
+
+Run the app - debug mode with real api :
+
+flutter run --dart-define=BASE_URL=https://api.exconvert.com --dart-define=ACCESS_KEY=270ca084-96a82de7-ae4aff0f-60b941d9
 
 ## About
 
