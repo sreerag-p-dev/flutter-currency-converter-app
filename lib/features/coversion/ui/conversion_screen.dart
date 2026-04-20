@@ -1,11 +1,10 @@
-import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:testproject/bloc/currency_converter_bloc.dart';
-import 'package:testproject/login_screen.dart';
+import 'package:testproject/features/coversion/bloc/currency_converter_bloc.dart';
+import 'package:testproject/features/auth/ui/login_screen.dart';
 import 'package:testproject/repository/apiservices.dart';
 import 'package:testproject/widgets/animated_card_widget.dart';
 import 'package:testproject/widgets/custom_snack_bar.dart';

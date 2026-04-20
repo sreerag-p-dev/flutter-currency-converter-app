@@ -1,45 +1,53 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:testproject/home_screen.dart';
-import 'package:testproject/signup_screen.dart';
+import 'package:testproject/features/coversion/ui/conversion_screen.dart';
 import 'package:testproject/widgets/custom_snack_bar.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final auth = FirebaseAuth.instance;
 
   bool isLoading = false;
 
-  Future<void> login(BuildContext context) async {
-    setState(() => isLoading = true);
-
+  Future<void> signup() async {
     final nav = Navigator.of(context);
 
+    if (emailController.text.isEmpty) {
+      showCustomSnackBar(context, "Please enter the email", false);
+      return;
+    }
+    if (passwordController.text.isEmpty) {
+      showCustomSnackBar(context, "Please enter the password", false);
+      return;
+    }
+    if (confirmPasswordController.text.isEmpty) {
+      showCustomSnackBar(context, "Please re-enter the password", false);
+      return;
+    }
+    if (passwordController.text != confirmPasswordController.text) {
+      showCustomSnackBar(context, "Passwords do not match!", false);
+      return;
+    }
+    setState(() => isLoading = true);
     try {
-      if (emailController.text.isEmpty) {
-        showCustomSnackBar(context, "Please enter the email", false);
-        return;
-      }
-      if (passwordController.text.isEmpty) {
-        showCustomSnackBar(context, "Please enter the password", false);
-        return;
-      }
-      await auth.signInWithEmailAndPassword(
+      await auth.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      if (!mounted) return; // ensures widget is still in tree
+      if(!mounted) return;
 
-      showCustomSnackBar(context, "Successful Login", true);
+      showCustomSnackBar(context, "User created successfully!", true);
 
       nav.pushReplacement(
         PageRouteBuilder(
@@ -64,13 +72,27 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'invalid-email') {
+      if(!mounted) return;
+      if (e.code == 'email-already-in-use') {
+        showCustomSnackBar(
+          context,
+          "Email already exists! Please login instead.",
+          false,
+        );
+      } else if (e.code == 'invalid-email') {
         showCustomSnackBar(context, "Invalid email format!", false);
+      } else if (e.code == 'weak-password') {
+        showCustomSnackBar(
+          context,
+          "Password should be at least 6 characters!",
+          false,
+        );
       } else {
-        showCustomSnackBar(context, "Credential is incorrect!", false);
+        showCustomSnackBar(context, "Signup failed: ${e.message}", false);
       }
     } catch (e) {
-      showCustomSnackBar(context, "Credential is incorrect!", false);
+      if(!mounted) return;
+      showCustomSnackBar(context, "User creation failed!", false);
     } finally {
       setState(() => isLoading = false);
     }
@@ -92,31 +114,17 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.blueAccent.withValues(alpha: 0.6),
-                      Colors.lightBlue.withValues(alpha: 0.6),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.account_circle,
-                  size: 100,
+              const SizedBox(height: 30),
+              Text(
+                "Create User",
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
                   color: Colors.white,
+                  letterSpacing: 1.2,
                 ),
               ),
-              SizedBox(height: 30),
-
+              const SizedBox(height: 30),
               Card(
                 margin: EdgeInsets.all(0),
                 shape: RoundedRectangleBorder(
@@ -131,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                       TextField(
                         controller: emailController,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.email),
+                          prefixIcon: const Icon(Icons.email),
                           hintText: "Email",
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -141,12 +149,27 @@ class _LoginPageState extends State<LoginPage> {
                           filled: true,
                         ),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       TextField(
                         controller: passwordController,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.lock),
+                          prefixIcon: const Icon(Icons.lock),
                           hintText: "Password",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          fillColor: Colors.white,
+                          filled: true,
+                        ),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 20),
+                      TextField(
+                        controller: confirmPasswordController,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          hintText: "Confirm Password",
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -161,16 +184,16 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              SizedBox(height: 25),
+              const SizedBox(height: 25),
 
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    login(context);
+                    signup();
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -188,8 +211,8 @@ class _LoginPageState extends State<LoginPage> {
                               strokeWidth: 2,
                             ),
                           )
-                          : Text(
-                            "Login",
+                          : const Text(
+                            "Sign Up",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -198,57 +221,21 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                 ),
               ),
-              SizedBox(height: 10),
+
+              const SizedBox(height: 10),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    "Not registered yet? ",
+                    "Already have an account? ",
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
-                                  SignUpPage(),
-                          transitionsBuilder: (
-                            context,
-                            animation,
-                            secondaryAnimation,
-                            child,
-                          ) {
-                            final fadeAnim = Tween<double>(
-                              begin: 0,
-                              end: 1,
-                            ).animate(animation);
-                            final slideAnim = Tween<Offset>(
-                              begin: const Offset(1, 0), // from right
-                              end: Offset.zero,
-                            ).animate(
-                              CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeInOut,
-                              ),
-                            );
+                    onTap: () => Navigator.pop(context),
 
-                            return FadeTransition(
-                              opacity: fadeAnim,
-                              child: SlideTransition(
-                                position: slideAnim,
-                                child: child,
-                              ),
-                            );
-                          },
-                          transitionDuration: const Duration(milliseconds: 500),
-                        ),
-                      );
-                    },
                     child: const Text(
-                      "Create User",
+                      "Login",
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

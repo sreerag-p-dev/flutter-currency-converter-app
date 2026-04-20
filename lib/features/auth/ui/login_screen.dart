@@ -1,56 +1,46 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:testproject/home_screen.dart';
+import 'package:testproject/features/coversion/ui/conversion_screen.dart';
+import 'package:testproject/features/auth/ui/signup_screen.dart';
 import 'package:testproject/widgets/custom_snack_bar.dart';
 
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<SignUpPage> createState() => _SignUpPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
   final auth = FirebaseAuth.instance;
 
   bool isLoading = false;
 
-  Future<void> signup(BuildContext context) async {
+  Future<void> login() async {
+    setState(() => isLoading = true);
+
     final nav = Navigator.of(context);
 
-    if (emailController.text.isEmpty) {
-      showCustomSnackBar(context, "Please enter the email", false);
-      return;
-    }
-    if (passwordController.text.isEmpty) {
-      showCustomSnackBar(context, "Please enter the password", false);
-      return;
-    }
-    if (confirmPasswordController.text.isEmpty) {
-      showCustomSnackBar(context, "Please re-enter the password", false);
-      return;
-    }
-    if (passwordController.text != confirmPasswordController.text) {
-      showCustomSnackBar(context, "Passwords do not match!", false);
-      return;
-    }
-    setState(() => isLoading = true);
     try {
-      await auth.createUserWithEmailAndPassword(
+      if (emailController.text.isEmpty) {
+        showCustomSnackBar(context, "Please enter the email", false);
+        return;
+      }
+      if (passwordController.text.isEmpty) {
+        showCustomSnackBar(context, "Please enter the password", false);
+        return;
+      }
+      await auth.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      showCustomSnackBar(context, "User created successfully!", true);
+      if (!mounted) return; // ensures widget is still in tree
 
-      if (!mounted) return;
-      //   nav.pushReplacement(
-      //   MaterialPageRoute(builder: (_) => const HomeScreen()),
-      // );
+      showCustomSnackBar(context, "Successful Login", true);
+
       nav.pushReplacement(
         PageRouteBuilder(
           pageBuilder:
@@ -74,25 +64,13 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       );
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
-        showCustomSnackBar(
-          context,
-          "Email already exists! Please login instead.",
-          false,
-        );
-      } else if (e.code == 'invalid-email') {
+      if (e.code == 'invalid-email') {
         showCustomSnackBar(context, "Invalid email format!", false);
-      } else if (e.code == 'weak-password') {
-        showCustomSnackBar(
-          context,
-          "Password should be at least 6 characters!",
-          false,
-        );
       } else {
-        showCustomSnackBar(context, "Signup failed: ${e.message}", false);
+        showCustomSnackBar(context, "Credential is incorrect!", false);
       }
     } catch (e) {
-      showCustomSnackBar(context, "User creation failed!", false);
+      showCustomSnackBar(context, "Credential is incorrect!", false);
     } finally {
       setState(() => isLoading = false);
     }
@@ -114,17 +92,31 @@ class _SignUpPageState extends State<SignUpPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 30),
-              Text(
-                "Create User",
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blueAccent.withValues(alpha: 0.6),
+                      Colors.lightBlue.withValues(alpha: 0.6),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.account_circle,
+                  size: 100,
                   color: Colors.white,
-                  letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: 30),
+              SizedBox(height: 30),
+
               Card(
                 margin: EdgeInsets.all(0),
                 shape: RoundedRectangleBorder(
@@ -139,7 +131,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       TextField(
                         controller: emailController,
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.email),
+                          prefixIcon: Icon(Icons.email),
                           hintText: "Email",
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -149,27 +141,12 @@ class _SignUpPageState extends State<SignUpPage> {
                           filled: true,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
                       TextField(
                         controller: passwordController,
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.lock),
+                          prefixIcon: Icon(Icons.lock),
                           hintText: "Password",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          fillColor: Colors.white,
-                          filled: true,
-                        ),
-                        obscureText: true,
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: confirmPasswordController,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.lock_outline),
-                          hintText: "Confirm Password",
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -184,16 +161,16 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
 
-              const SizedBox(height: 25),
+              SizedBox(height: 25),
 
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    signup(context);
+                    login();
                   },
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -211,8 +188,8 @@ class _SignUpPageState extends State<SignUpPage> {
                               strokeWidth: 2,
                             ),
                           )
-                          : const Text(
-                            "Sign Up",
+                          : Text(
+                            "Login",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -221,21 +198,57 @@ class _SignUpPageState extends State<SignUpPage> {
                           ),
                 ),
               ),
-
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    "Already have an account? ",
+                    "Not registered yet? ",
                     style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  SignUpPage(),
+                          transitionsBuilder: (
+                            context,
+                            animation,
+                            secondaryAnimation,
+                            child,
+                          ) {
+                            final fadeAnim = Tween<double>(
+                              begin: 0,
+                              end: 1,
+                            ).animate(animation);
+                            final slideAnim = Tween<Offset>(
+                              begin: const Offset(1, 0), // from right
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeInOut,
+                              ),
+                            );
 
+                            return FadeTransition(
+                              opacity: fadeAnim,
+                              child: SlideTransition(
+                                position: slideAnim,
+                                child: child,
+                              ),
+                            );
+                          },
+                          transitionDuration: const Duration(milliseconds: 500),
+                        ),
+                      );
+                    },
                     child: const Text(
-                      "Login",
+                      "Create User",
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
